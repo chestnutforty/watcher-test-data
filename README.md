@@ -2,7 +2,7 @@
 
 Controllable JSON endpoints served via GitHub Pages for testing the prediction engine watcher.
 
-**Dashboard:** https://danielproj.github.io/watcher-test-data/
+**Dashboard:** https://chestnutforty.github.io/watcher-test-data/
 
 ## Endpoints
 

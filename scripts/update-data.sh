@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-REPO="danielproj/watcher-test-data"
+REPO="chestnutforty/watcher-test-data"
 DATASET="${1:?Usage: $0 <dataset> <json_path> <new_value>}"
 FILEPATH="data/${DATASET}.json"
 
@@ -66,4 +66,4 @@ gh api "repos/${REPO}/contents/${FILEPATH}" \
 
 echo ""
 echo "✓ Updated! GitHub Pages will refresh in ~30s."
-echo "  View: https://danielproj.github.io/watcher-test-data/data/${DATASET}.json"
+echo "  View: https://chestnutforty.github.io/watcher-test-data/data/${DATASET}.json"

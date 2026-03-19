@@ -55,7 +55,7 @@
   -d '{
     "endpoint_key": "test:unemployment",
     "service": "github-pages",
-    "url": "<span class="string" id="base-url-placeholder">https://danielproj.github.io/watcher-test-data</span>/data/unemployment.json",
+    "url": "<span class="string" id="base-url-placeholder">https://chestnutforty.github.io/watcher-test-data</span>/data/unemployment.json",
     "poll_frequency_minutes": 1,
     "notify_strategy": "on_change"
   }'
@@ -64,11 +64,11 @@
 <span class="cmd">./scripts/update-data.sh</span> unemployment '{"latest":{"date":"2026-03","value":5.1}}'
 
 <span class="comment"># 3. Or use the GitHub API directly</span>
-<span class="cmd">gh api</span> repos/danielproj/watcher-test-data/contents/data/unemployment.json \
+<span class="cmd">gh api</span> repos/chestnutforty/watcher-test-data/contents/data/unemployment.json \
   --method PUT \
   --field message="Bump unemployment to 5.1" \
   --field content="$(base64 &lt; new-data.json)" \
-  --field sha="$(gh api repos/danielproj/watcher-test-data/contents/data/unemployment.json -q .sha)"
+  --field sha="$(gh api repos/chestnutforty/watcher-test-data/contents/data/unemployment.json -q .sha)"
 
 <span class="comment"># 4. Wait for watcher poll cycle, then check updates</span>
 <span class="cmd">curl</span> http://localhost:6080/v1/forecast/&lt;FORECAST_ID&gt;/updates
@@ -82,8 +82,8 @@
 </div>
 
 <script>
-const REPO = 'danielproj/watcher-test-data';
-const BASE = `https://danielproj.github.io/watcher-test-data`;
+const REPO = 'chestnutforty/watcher-test-data';
+const BASE = `https://chestnutforty.github.io/watcher-test-data`;
 const DATASETS = [
   { file: 'unemployment.json', name: 'Unemployment Rate', icon: '📊', valueKey: 'latest.value', unitLabel: '%' },
   { file: 'gdp.json',          name: 'GDP',               icon: '💰', valueKey: 'latest.value', unitLabel: 'B USD' },

@@ -14,7 +14,7 @@ FORECAST_ID="${1:?Usage: $0 <forecast_id> [api_base_url] [poll_minutes]}"
 API_BASE="${2:-http://localhost:6080}"
 POLL_MINUTES="${3:-1}"
 
-PAGES_BASE="https://danielproj.github.io/watcher-test-data"
+PAGES_BASE="https://chestnutforty.github.io/watcher-test-data"
 
 declare -A ENDPOINTS=(
     ["test:unemployment"]="data/unemployment.json"

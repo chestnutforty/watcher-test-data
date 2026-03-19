@@ -59,7 +59,7 @@ all-change)
 
 reset)
     echo "🔄 Resetting all datasets to baseline..."
-    REPO="danielproj/watcher-test-data"
+    REPO="chestnutforty/watcher-test-data"
     git -C "$(dirname "$SCRIPT_DIR")" checkout -- data/
     git -C "$(dirname "$SCRIPT_DIR")" add data/ && \
     git -C "$(dirname "$SCRIPT_DIR")" commit -m "Reset test data to baseline" && \
