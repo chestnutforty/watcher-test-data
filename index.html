@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watcher Test Data Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; padding: 24px; }
+  h1 { color: #58a6ff; margin-bottom: 8px; font-size: 24px; }
+  .subtitle { color: #8b949e; margin-bottom: 24px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+  .card h2 { color: #58a6ff; font-size: 16px; margin-bottom: 4px; }
+  .card .meta { color: #8b949e; font-size: 12px; margin-bottom: 12px; }
+  .card .value { font-size: 32px; font-weight: bold; color: #f0f6fc; margin-bottom: 8px; }
+  .card .unit { font-size: 14px; color: #8b949e; }
+  .card .url { font-size: 11px; color: #8b949e; word-break: break-all; margin-top: 12px; padding: 8px; background: #0d1117; border-radius: 4px; font-family: monospace; }
+  .card .url a { color: #58a6ff; text-decoration: none; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-live { background: #1f6f2b; color: #3fb950; }
+  .history { margin-top: 12px; font-size: 13px; }
+  .history table { width: 100%; border-collapse: collapse; }
+  .history th, .history td { padding: 4px 8px; text-align: left; border-bottom: 1px solid #21262d; }
+  .history th { color: #8b949e; font-weight: normal; }
+  .actions { margin-top: 16px; padding-top: 12px; border-top: 1px solid #21262d; }
+  .actions code { background: #0d1117; padding: 8px 12px; border-radius: 4px; display: block; font-size: 12px; color: #79c0ff; margin-top: 6px; white-space: pre-wrap; word-break: break-all; }
+  .actions .label { font-size: 12px; color: #8b949e; margin-top: 8px; }
+  .section { margin-top: 32px; }
+  .section h2 { color: #f0f6fc; font-size: 18px; margin-bottom: 12px; }
+  pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; font-size: 13px; overflow-x: auto; color: #c9d1d9; }
+  pre .comment { color: #8b949e; }
+  pre .cmd { color: #79c0ff; }
+  pre .string { color: #a5d6ff; }
+  .status { margin-top: 24px; padding: 16px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; }
+  .status h3 { color: #f0f6fc; font-size: 14px; margin-bottom: 8px; }
+  #refresh-status { font-size: 12px; color: #8b949e; }
+  .error { color: #f85149; }
+  .ok { color: #3fb950; }
+</style>
+</head>
+<body>
+
+<h1>Watcher Test Data</h1>
+<p class="subtitle">Controllable JSON endpoints for testing the prediction engine watcher. Change values below, then watch the watcher detect changes.</p>
+
+<div class="grid" id="cards"></div>
+
+<div class="section">
+  <h2>How to Use</h2>
+  <pre>
+<span class="comment"># 1. Register a watcher endpoint pointing at this GitHub Pages URL</span>
+<span class="cmd">curl</span> -X POST http://localhost:6080/v1/forecast/&lt;FORECAST_ID&gt;/watch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "endpoint_key": "test:unemployment",
+    "service": "github-pages",
+    "url": "<span class="string" id="base-url-placeholder">https://danielproj.github.io/watcher-test-data</span>/data/unemployment.json",
+    "poll_frequency_minutes": 1,
+    "notify_strategy": "on_change"
+  }'
+
+<span class="comment"># 2. Change the data (bumps unemployment from 4.3 → 5.1)</span>
+<span class="cmd">./scripts/update-data.sh</span> unemployment '{"latest":{"date":"2026-03","value":5.1}}'
+
+<span class="comment"># 3. Or use the GitHub API directly</span>
+<span class="cmd">gh api</span> repos/danielproj/watcher-test-data/contents/data/unemployment.json \
+  --method PUT \
+  --field message="Bump unemployment to 5.1" \
+  --field content="$(base64 &lt; new-data.json)" \
+  --field sha="$(gh api repos/danielproj/watcher-test-data/contents/data/unemployment.json -q .sha)"
+
+<span class="comment"># 4. Wait for watcher poll cycle, then check updates</span>
+<span class="cmd">curl</span> http://localhost:6080/v1/forecast/&lt;FORECAST_ID&gt;/updates
+</pre>
+</div>
+
+<div class="status" id="status-panel">
+  <h3>Endpoint Status</h3>
+  <p id="refresh-status">Loading...</p>
+  <div id="endpoint-checks"></div>
+</div>
+
+<script>
+const REPO = 'danielproj/watcher-test-data';
+const BASE = `https://danielproj.github.io/watcher-test-data`;
+const DATASETS = [
+  { file: 'unemployment.json', name: 'Unemployment Rate', icon: '📊', valueKey: 'latest.value', unitLabel: '%' },
+  { file: 'gdp.json',          name: 'GDP',               icon: '💰', valueKey: 'latest.value', unitLabel: 'B USD' },
+  { file: 'fed-rate.json',     name: 'Fed Funds Rate',    icon: '🏦', valueKey: 'latest.value', unitLabel: '%' },
+  { file: 'cpi.json',          name: 'CPI Index',         icon: '🛒', valueKey: 'latest.value', unitLabel: '' },
+  { file: 'sp500.json',        name: 'S&P 500',           icon: '📈', valueKey: 'latest.close', unitLabel: 'pts' },
+];
+
+function getNestedValue(obj, path) {
+  return path.split('.').reduce((o, k) => o && o[k], obj);
+}
+
+async function loadData() {
+  const grid = document.getElementById('cards');
+  grid.innerHTML = '';
+
+  for (const ds of DATASETS) {
+    const url = `${BASE}/data/${ds.file}`;
+    try {
+      const resp = await fetch(url + '?t=' + Date.now());
+      const data = await resp.json();
+      const val = getNestedValue(data, ds.valueKey);
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      let historyRows = '';
+      const obs = data.observations || [];
+      for (const o of obs.slice(-3)) {
+        const v = o.value !== undefined ? o.value : o.close;
+        historyRows += `<tr><td>${o.date}</td><td>${v}</td></tr>`;
+      }
+
+      card.innerHTML = `
+        <h2>${ds.name}</h2>
+        <div class="meta">${data.source || ''} · ${data.series_id || data.index || ''} <span class="badge badge-live">LIVE</span></div>
+        <div class="value">${val}<span class="unit"> ${ds.unitLabel}</span></div>
+        <div class="history">
+          <table><tr><th>Date</th><th>Value</th></tr>${historyRows}</table>
+        </div>
+        <div class="url">Poll URL: <a href="${url}" target="_blank">${url}</a></div>
+        <div class="actions">
+          <div class="label">Change this value:</div>
+          <code>./scripts/update-data.sh ${ds.file.replace('.json','')} latest.value NEW_VALUE</code>
+        </div>
+      `;
+      grid.appendChild(card);
+    } catch (e) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `<h2>${ds.name}</h2><p class="error">Failed to load: ${e.message}</p>`;
+      grid.appendChild(card);
+    }
+  }
+}
+
+async function checkEndpoints() {
+  const panel = document.getElementById('endpoint-checks');
+  const status = document.getElementById('refresh-status');
+  let html = '<table style="width:100%;margin-top:8px;font-size:13px;">';
+
+  for (const ds of DATASETS) {
+    const url = `${BASE}/data/${ds.file}`;
+    try {
+      const t0 = performance.now();
+      const resp = await fetch(url + '?t=' + Date.now());
+      const ms = Math.round(performance.now() - t0);
+      const ok = resp.ok;
+      html += `<tr>
+        <td>${ds.name}</td>
+        <td class="${ok ? 'ok' : 'error'}">${ok ? '✓' : '✗'} ${resp.status}</td>
+        <td style="color:#8b949e">${ms}ms</td>
+      </tr>`;
+    } catch (e) {
+      html += `<tr><td>${ds.name}</td><td class="error">✗ ${e.message}</td><td></td></tr>`;
+    }
+  }
+  html += '</table>';
+  panel.innerHTML = html;
+  status.textContent = `Last checked: ${new Date().toLocaleTimeString()}`;
+}
+
+loadData();
+checkEndpoints();
+setInterval(checkEndpoints, 30000);
+</script>
+</body>
+</html>

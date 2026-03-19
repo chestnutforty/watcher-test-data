@@ -1,0 +1,14 @@
+{
+  "series_id": "FEDFUNDS",
+  "source": "FRED",
+  "unit": "percent",
+  "observations": [
+    {"date": "2026-01", "value": 4.50},
+    {"date": "2026-02", "value": 4.50}
+  ],
+  "latest": {
+    "date": "2026-02",
+    "value": 4.50
+  },
+  "updated_at": "2026-03-05T14:00:00Z"
+}

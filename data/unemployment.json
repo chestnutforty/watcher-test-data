@@ -1,0 +1,14 @@
+{
+  "series_id": "UNRATE",
+  "source": "BLS",
+  "unit": "percent",
+  "observations": [
+    {"date": "2026-01", "value": 4.2},
+    {"date": "2026-02", "value": 4.3}
+  ],
+  "latest": {
+    "date": "2026-02",
+    "value": 4.3
+  },
+  "updated_at": "2026-03-07T12:00:00Z"
+}

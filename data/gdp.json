@@ -1,0 +1,14 @@
+{
+  "series_id": "GDP",
+  "source": "BEA",
+  "unit": "billions_usd",
+  "observations": [
+    {"date": "2025-Q3", "value": 29352.0},
+    {"date": "2025-Q4", "value": 29580.0}
+  ],
+  "latest": {
+    "date": "2025-Q4",
+    "value": 29580.0
+  },
+  "updated_at": "2026-03-01T10:00:00Z"
+}
